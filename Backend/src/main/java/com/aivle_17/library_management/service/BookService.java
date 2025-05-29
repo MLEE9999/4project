@@ -2,9 +2,6 @@ package com.aivle_17.library_management.service;
 
 import com.aivle_17.library_management.domain.Book;
 import com.aivle_17.library_management.domain.CategoryEnum;
-import com.aivle_17.library_management.dto.BookCreateRequest;
-import com.aivle_17.library_management.dto.BookPartialUpdateRequest;
-import com.aivle_17.library_management.dto.BookUpdateRequest;
 import com.aivle_17.library_management.exception.BookNotFoundException;
 import com.aivle_17.library_management.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,13 +18,9 @@ public class BookService {
     private final BookRepository bookRepository;
 
     @Transactional
-    public Book createBook(BookCreateRequest request) {
-        Book book = Book.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .coverUrl(request.getCoverUrl())
-                .category(request.getCategory())
-                .build();
+    // BookCreateRequest 대신 Book 엔티티를 직접 받음
+    public Book createBook(Book book) {
+        // 클라이언트로부터 받은 Book 엔티티를 바로 저장 (id, createdAt, updatedAt은 JPA가 관리)
         return bookRepository.save(book);
     }
 
@@ -49,19 +42,25 @@ public class BookService {
     }
 
     @Transactional
-    public Book updateBook(Long id, BookUpdateRequest request) {
+    // BookUpdateRequest 대신 Book 엔티티를 직접 받음
+    public Book updateBook(Long id, Book updatedBookData) { // 파라미터 이름을 updatedBookData로 변경하여 혼동 방지
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new BookNotFoundException("Book with ID " + id + " not found"));
-        book.update(request.getTitle(), request.getContent(), request.getCoverUrl(), request.getCategory());
-        return book;
+        // Book 엔티티의 update 메서드 호출 (이때, updatedBookData의 필드들을 사용)
+        book.update(updatedBookData.getTitle(), updatedBookData.getContent(), updatedBookData.getCoverUrl(), updatedBookData.getCategory());
+        return book; // 영속성 컨텍스트에 의해 변경 감지되어 자동으로 업데이트
     }
 
     @Transactional
-    public Book partialUpdateBook(Long id, BookPartialUpdateRequest request) {
+    // BookPartialUpdateRequest 대신 Book 엔티티를 직접 받음
+    public Book partialUpdateBook(Long id, Book partialBookData) { // 파라미터 이름을 partialBookData로 변경
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new BookNotFoundException("Book with ID " + id + " not found"));
-        book.partialUpdate(request.getTitle(), request.getContent(), request.getCoverUrl(), request.getCategory());
-        return book;
+
+        // partialUpdate 메서드 호출 시, 클라이언트가 보내지 않은 필드는 null이 될 수 있으므로
+        // Book 엔티티의 partialUpdate 메서드가 null 체크를 해야 함.
+        book.partialUpdate(partialBookData.getTitle(), partialBookData.getContent(), partialBookData.getCoverUrl(), partialBookData.getCategory());
+        return book; // 영속성 컨텍스트에 의해 변경 감지되어 자동으로 업데이트
     }
 
     @Transactional
