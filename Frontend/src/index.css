@@ -1,14 +1,26 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/* src/index.css */
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+/* 1. html 요소가 뷰포트 전체 높이를 차지하도록 */
+html {
+  height: 100%;
+}
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+#root {
+  flex-grow: 1; /* body의 남은 공간을 #root가 모두 채우도록 */
+  display: flex; /* #root가 App.jsx 내용을 위한 flex 컨테이너가 됨 */
+  flex-direction: column; /* App.jsx 내부 요소들이 수직으로 쌓이도록 */
+  min-height: 100%; /* #root가 자신의 부모(body)의 높이를 채우도록 */
+  /* 여기에 혹시 모를 max-width, width, margin, padding, text-align 속성이 있다면 모두 제거하세요! */
+}
+
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column; /* body의 자식 요소를 수직으로 쌓아주고, #root가 남은 공간을 채우기 쉽게 합니다. */
+  min-width: 320px;
+  min-height: 100vh; /* 뷰포트 전체 높이를 차지하도록 */
+  background-color: white;
+  font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -29,7 +41,7 @@ a:hover {
 body {
   margin: 0;
   display: flex;
-  place-items: center;
+  /* place-items: center; */
   min-width: 320px;
   min-height: 100vh;
 }
