@@ -42,7 +42,7 @@ function AddBookPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
-    author: '',
+ 
     content: '',
     coverUrl: '',
     category: '',
@@ -95,11 +95,7 @@ function AddBookPage() {
         setLoading(false);
         return;
       }
-      if (!formData.author) {
-        setSnackbar({ open: true, message: 'Please enter the author.', severity: 'warning' });
-        setLoading(false);
-        return;
-      }
+    
       await createBook(formData);
       setSnackbar({ open: true, message: 'Book added successfully!', severity: 'success' });
       setTimeout(() => {
@@ -153,20 +149,7 @@ function AddBookPage() {
             />
           </InputFieldWrapper>
           
-          {/* Author 필드가 원본 코드에는 없었지만, 이전 요청에서 추가되었을 수 있으므로 예시로 포함 */}
-          <InputFieldWrapper>
-            <StyledTextField
-              label="Author"
-              name="author"
-              placeholder="Enter author's name" /* 실제 프로젝트에 맞게 수정 */
-              value={formData.author}
-              onChange={handleChange}
-              fullWidth
-              required /* 실제 프로젝트에 맞게 수정 */
-              variant="outlined"
-            />
-          </InputFieldWrapper>
-
+        
           <InputFieldWrapper>
             <StyledTextField
               label="Content"
