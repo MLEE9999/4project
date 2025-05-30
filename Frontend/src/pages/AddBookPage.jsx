@@ -10,29 +10,44 @@ import {
   Snackbar, // 알림 메시지 (성공/실패)
 } from '@mui/material';
 import MuiAlert from '@mui/material/Alert'; // Snackbar와 함께 사용
-import AppBar from '../components/AppBar';
-import Footer from '../components/Footer';
-import { createBook } from '../api'; // 책 생성 API 임포트
+// import AppBar from '../components/AppBar'; // 이 컴포넌트가 없다면 직접 AppBar를 구성해야 합니다.
+// import Footer from '../components/Footer'; // 이 컴포넌트가 없다면 직접 Footer를 구성해야 합니다.
+import { createBook, generateBookCoverImage } from '../api'; // 책 생성 API 및 이미지 생성 API 임포트
 import { useNavigate } from 'react-router-dom'; // 리디렉션을 위한 useNavigate
+
+// AppBar 및 Footer 컴포넌트가 없으므로 임시로 여기에 복사하거나, 실제 프로젝트 구조에 맞게 import 경로를 수정해야 합니다.
+// 예시: 임시 AppBar 컴포넌트 (실제 프로젝트에서는 src/components/AppBar.jsx에 있어야 함)
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import AccountCircle from '@mui/icons-material/AccountCircle';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import { Plus as PlusIcon } from '@phosphor-icons/react'; // PlusIcon 임포트 (가정: 설치되어 있음)
+
 
 // 백엔드의 CategoryEnum 값을 프론트엔드에서 사용하기 위해 정의 (실제 Enum 값과 일치해야 함)
 const CATEGORY_OPTIONS = [
   { value: 'NOVELS', label: 'Novels' },
-  { value: 'POETRY', label: 'Poerty' },
+  { value: 'POETRY', label: 'Poetry' },
   { value: 'COOKING', label: 'Cooking' },
   { value: 'HEALTH', label: 'Health' },
   { value: 'TECHNOLOGY', label: 'Technology' },
+  // 여기에 더 많은 카테고리 추가
 ];
 
 function AddBookPage() {
   const navigate = useNavigate(); // 리디렉션 훅
   const [formData, setFormData] = useState({
     title: '',
+    author: '', // author 필드 추가
     content: '',
     coverUrl: '',
     category: '', // CategoryEnum
   });
+  const [apiKey, setApiKey] = useState(''); // OpenAI API Key
   const [loading, setLoading] = useState(false);
+  const [imageGenerating, setImageGenerating] = useState(false); // 이미지 생성 로딩 상태
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -47,13 +62,43 @@ function AddBookPage() {
     }));
   };
 
+  const handleApiKeyChange = (e) => {
+    setApiKey(e.target.value);
+  };
+
+  const handleGenerateImage = async () => {
+    if (!apiKey || !formData.title) {
+      setSnackbar({ open: true, message: 'Please enter a title and API Key to generate an image.', severity: 'warning' });
+      return;
+    }
+
+    setImageGenerating(true);
+    try {
+      const imageUrl = await generateBookCoverImage(formData.title, apiKey);
+      setFormData((prevData) => ({ ...prevData, coverUrl: imageUrl }));
+      setSnackbar({ open: true, message: 'Image generated successfully!', severity: 'success' });
+    } catch (error) {
+      console.error('Image generation failed:', error);
+      setSnackbar({ open: true, message: `Image generation failed: ${error.message}`, severity: 'error' });
+    } finally {
+      setImageGenerating(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault(); // 폼 기본 제출 동작 방지
     setLoading(true);
     try {
-      // 카테고리가 선택되지 않았다면 기본값 설정 또는 유효성 검사 에러 처리
+      // 카테고리가 선택되지 않았다면 유효성 검사 에러 처리
       if (!formData.category) {
         setSnackbar({ open: true, message: 'Please select a category.', severity: 'warning' });
+        setLoading(false);
+        return;
+      }
+      
+      // author가 비어있다면 경고 메시지
+      if (!formData.author) {
+        setSnackbar({ open: true, message: 'Please enter the author.', severity: 'warning' });
         setLoading(false);
         return;
       }
@@ -62,7 +107,7 @@ function AddBookPage() {
       setSnackbar({ open: true, message: 'Book added successfully!', severity: 'success' });
       // 성공 후 2초 뒤에 메인 페이지로 이동
       setTimeout(() => {
-        navigate('/'); // 메인 페이지로 이동
+        navigate('/'); // 메인 페이지로 이동 또는 책 목록 페이지로 이동
       }, 2000);
     } catch (error) {
       console.error('Failed to add book:', error);
@@ -95,28 +140,69 @@ function AddBookPage() {
         fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif',
       }}
     >
-      <AppBar /> {/* 헤더 재사용 */}
+      {/* AppBar 임시 구현 (실제로는 src/components/AppBar.jsx에서 import) */}
+      <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: '1px solid #f0f2f5', px: 5, py: 1.5 }}>
+        <Toolbar sx={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, color: '#111418' }}>
+            <Box sx={{ width: 16, height: 16 }}>
+              <svg viewBox="0 0 48 48" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2183 14.2173 24 4Z"></path>
+              </svg>
+            </Box>
+            <Typography variant="h6" component="h2" sx={{ fontSize: '1.125rem', fontWeight: 'bold', letterSpacing: '-0.015em' }}>
+              Book Manager
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Button color="inherit" onClick={() => navigate('/')} sx={{ color: '#111418', fontSize: '0.875rem', fontWeight: 500, textTransform: 'none' }}>Dashboard</Button>
+            <Button color="inherit" onClick={() => navigate('/books')} sx={{ color: '#111418', fontSize: '0.875rem', fontWeight: 500, textTransform: 'none' }}>Books</Button>
+            <Button color="inherit" sx={{ color: '#111418', fontSize: '0.875rem', fontWeight: 500, textTransform: 'none' }}>Authors</Button>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Button
+              variant="contained"
+              startIcon={<PlusIcon size={20} weight="regular" />}
+              sx={{
+                bgcolor: '#f0f2f5', color: '#111418', borderRadius: '12px', height: 40, px: 2.5,
+                fontWeight: 'bold', fontSize: '0.875rem', textTransform: 'none', '&:hover': { bgcolor: '#e0e0e0' }
+              }}
+            >
+              Add Book
+            </Button>
+            <IconButton sx={{ p: 0.5, bgcolor: '#f0f2f5', borderRadius: '12px' }}>
+              <NotificationsIcon sx={{ color: '#111418' }} />
+            </IconButton>
+            <Box
+              sx={{
+                width: 40, height: 40, borderRadius: '50%',
+                backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuADBGWM7eAsebCtpzl4qf3o2mzbFztzSspV4SrFHaHeROQZNj0L7gDeB1T2CJLAAoxjYl4JoDyXuqZb_w5Hu50D6Easfs7vaUWQTRBvhVBN8gY958oqI50AQgf1TKdl2Q6SRDYrVmULXwuMBtSzn9UnZenQM0EaV8lVd0bsmOQwQlmXBasIMcINGWDyTyBFDJOF0UnTs7Ds_HllDwVzXv8BYDXCE7O2f8l7110nxYMNBa4veazXY0P5Lu5hI5UmGTUjCLBoVsPjBvfH")',
+                backgroundSize: 'cover', backgroundPosition: 'center',
+              }}
+            />
+          </Box>
+        </Toolbar>
+      </AppBar>
 
-      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', py: 5, px: { xs: 2, sm: 5, md: 10 } }}>
+      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', py: 5, px: { xs: 2, sm: 5, md: 10 }, flexDirection: { xs: 'column', md: 'row' }, gap: 5 }}>
+        {/* Left: Book Input Form */}
         <Box
-          component="form" // 폼 태그로 변경
-          onSubmit={handleSubmit} // 폼 제출 핸들러
+          component="form"
+          onSubmit={handleSubmit}
           sx={{
-            flex: 1, // 남은 공간 채우기
-            maxWidth: '512px', // HTML 원본의 폼 최대 너비 (w-[512px] max-w-[512px] 참조)
+            flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            gap: 3, // 필드 간 간격
-            py: 5, // 수직 패딩
+            gap: 3,
+            py: 5,
+            maxWidth: { xs: '100%', md: '512px' }, // 모바일에서는 꽉 채우고, 데스크탑에서는 최대 512px
           }}
         >
-          <Box sx={{ p: 1 }}> {/* 타이틀 섹션 */}
+          <Box sx={{ p: 1 }}>
             <Typography variant="h4" component="h2" sx={{
-              color: '#111418', // HTML 색상 코드 사용
+              color: '#111418',
               fontWeight: 'bold',
-              letterSpacing: 'light',
               fontSize: '32px',
-              minWidth: '288px', // min-w-72 (tailwind 72 = 18rem = 288px)
+              minWidth: '288px',
             }}>
               Add New Book
             </Typography>
@@ -131,46 +217,41 @@ function AddBookPage() {
               value={formData.title}
               onChange={handleChange}
               fullWidth
-              required // 필수 필드
+              required
               variant="outlined"
+              inputProps={{ maxLength: 20 }} // 최대 길이 20
+              helperText={`${formData.title.length}/20`} // 현재 길이 표시
+              FormHelperTextProps={{ sx: { textAlign: 'right' } }}
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px', // rounded-xl (tailwind xl = 12px)
-                  height: '56px', // h-14 (tailwind 14 = 3.5rem = 56px)
-                  backgroundColor: 'white',
-                  '& fieldset': {
-                    borderColor: '#dbe0e6', // border-[#dbe0e6]
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#dbe0e6', // focus:border-[#dbe0e6]
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#dbe0e6', // focus:border-[#dbe0e6]
-                  },
-                },
-                '& .MuiInputBase-input': {
-                  color: '#111418', // text-[#111418]
-                  padding: '15px', // p-[15px]
-                  fontSize: '16px', // text-base
-                  fontWeight: 400, // font-normal
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#111418', // Label color
-                  fontWeight: 500, // font-medium
-                },
-                '& .MuiInputLabel-shrink': {
-                  // Label이 작아졌을 때의 스타일
-                  transform: 'translate(14px, -9px) scale(0.75)',
-                },
-                '& .MuiInputBase-input::placeholder': {
-                  color: '#60758a', // placeholder:text-[#60758a]
-                  opacity: 1, // placeholder opacity by default is low in MUI
-                },
+                '& .MuiOutlinedInput-root': { borderRadius: '12px', height: '56px', backgroundColor: 'white', '& fieldset': { borderColor: '#dbe0e6' }, '&:hover fieldset': { borderColor: '#dbe0e6' }, '&.Mui-focused fieldset': { borderColor: '#dbe0e6' } },
+                '& .MuiInputBase-input': { color: '#111418', padding: '15px', fontSize: '16px', fontWeight: 400 },
+                '& .MuiInputLabel-root': { color: '#111418', fontWeight: 500 },
+                '& .MuiInputBase-input::placeholder': { color: '#60758a', opacity: 1 },
               }}
             />
           </Box>
 
-          {/* Content 입력 필드 (HTML의 Author 대신) */}
+          {/* Author 입력 필드 */}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'end', gap: 4, px: 4, py: 3 }}>
+            <TextField
+              label="Author"
+              name="author"
+              placeholder="Enter author's name"
+              value={formData.author}
+              onChange={handleChange}
+              fullWidth
+              required
+              variant="outlined"
+              sx={{
+                '& .MuiOutlinedInput-root': { borderRadius: '12px', height: '56px', backgroundColor: 'white', '& fieldset': { borderColor: '#dbe0e6' }, '&:hover fieldset': { borderColor: '#dbe0e6' }, '&.Mui-focused fieldset': { borderColor: '#dbe0e6' } },
+                '& .MuiInputBase-input': { color: '#111418', padding: '15px', fontSize: '16px', fontWeight: 400 },
+                '& .MuiInputLabel-root': { color: '#111418', fontWeight: 500 },
+                '& .MuiInputBase-input::placeholder': { color: '#60758a', opacity: 1 },
+              }}
+            />
+          </Box>
+
+          {/* Content 입력 필드 */}
           <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'end', gap: 4, px: 4, py: 3 }}>
             <TextField
               label="Content"
@@ -179,68 +260,14 @@ function AddBookPage() {
               value={formData.content}
               onChange={handleChange}
               fullWidth
-              multiline // 여러 줄 입력 가능
-              rows={4} // 기본 4줄
+              multiline
+              rows={4}
               variant="outlined"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                  backgroundColor: 'white',
-                  '& fieldset': { borderColor: '#dbe0e6' },
-                  '&:hover fieldset': { borderColor: '#dbe0e6' },
-                  '&.Mui-focused fieldset': { borderColor: '#dbe0e6' },
-                },
-                '& .MuiInputBase-input': {
-                  color: '#111418',
-                  padding: '15px',
-                  fontSize: '16px',
-                  fontWeight: 400,
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#111418',
-                  fontWeight: 500,
-                },
-                '& .MuiInputBase-input::placeholder': {
-                  color: '#60758a',
-                  opacity: 1,
-                },
-              }}
-            />
-          </Box>
-
-          {/* Cover URL 입력 필드 (HTML의 API Key 대신) */}
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'end', gap: 4, px: 4, py: 3 }}>
-            <TextField
-              label="Cover Image URL"
-              name="coverUrl"
-              placeholder="Enter URL for cover image"
-              value={formData.coverUrl}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                  height: '56px',
-                  backgroundColor: 'white',
-                  '& fieldset': { borderColor: '#dbe0e6' },
-                  '&:hover fieldset': { borderColor: '#dbe0e6' },
-                  '&.Mui-focused fieldset': { borderColor: '#dbe0e6' },
-                },
-                '& .MuiInputBase-input': {
-                  color: '#111418',
-                  padding: '15px',
-                  fontSize: '16px',
-                  fontWeight: 400,
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#111418',
-                  fontWeight: 500,
-                },
-                '& .MuiInputBase-input::placeholder': {
-                  color: '#60758a',
-                  opacity: 1,
-                },
+                '& .MuiOutlinedInput-root': { borderRadius: '12px', backgroundColor: 'white', '& fieldset': { borderColor: '#dbe0e6' }, '&:hover fieldset': { borderColor: '#dbe0e6' }, '&.Mui-focused fieldset': { borderColor: '#dbe0e6' } },
+                '& .MuiInputBase-input': { color: '#111418', padding: '15px', fontSize: '16px', fontWeight: 400 },
+                '& .MuiInputLabel-root': { color: '#111418', fontWeight: 500 },
+                '& .MuiInputBase-input::placeholder': { color: '#60758a', opacity: 1 },
               }}
             />
           </Box>
@@ -257,24 +284,9 @@ function AddBookPage() {
               required
               variant="outlined"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                  height: '56px',
-                  backgroundColor: 'white',
-                  '& fieldset': { borderColor: '#dbe0e6' },
-                  '&:hover fieldset': { borderColor: '#dbe0e6' },
-                  '&.Mui-focused fieldset': { borderColor: '#dbe0e6' },
-                },
-                '& .MuiInputBase-input': {
-                  color: '#111418',
-                  padding: '15px',
-                  fontSize: '16px',
-                  fontWeight: 400,
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#111418',
-                  fontWeight: 500,
-                },
+                '& .MuiOutlinedInput-root': { borderRadius: '12px', height: '56px', backgroundColor: 'white', '& fieldset': { borderColor: '#dbe0e6' }, '&:hover fieldset': { borderColor: '#dbe0e6' }, '&.Mui-focused fieldset': { borderColor: '#dbe0e6' } },
+                '& .MuiInputBase-input': { color: '#111418', padding: '15px', fontSize: '16px', fontWeight: 400 },
+                '& .MuiInputLabel-root': { color: '#111418', fontWeight: 500 },
               }}
             >
               {/* 기본 옵션 (선택 안 함) */}
@@ -295,29 +307,92 @@ function AddBookPage() {
               type="submit" // 폼 제출 버튼
               variant="contained"
               disableElevation
-              disabled={loading} // 로딩 중에는 버튼 비활성화
+              disabled={loading || imageGenerating} // 로딩 중에는 버튼 비활성화
               sx={{
-                minWidth: 84,
-                height: 40,
-                borderRadius: '12px', // rounded-xl
-                bgcolor: '#0c7ff2', // bg-[#0c7ff2]
-                color: 'white',
-                fontWeight: 'bold',
-                letterSpacing: '0.015em',
-                textTransform: 'none',
-                px: 4,
-                '&:hover': {
-                  bgcolor: '#0a6ad1', // 호버 시 색상 변경
-                },
+                minWidth: 84, height: 40, borderRadius: '12px', bgcolor: '#0c7ff2', color: 'white', fontWeight: 'bold', letterSpacing: '0.015em', textTransform: 'none', px: 4,
+                '&:hover': { bgcolor: '#0a6ad1' },
               }}
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Add Book'}
             </Button>
           </Box>
         </Box>
+
+        {/* Right: Image Generation */}
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            py: 5,
+            maxWidth: { xs: '100%', md: '512px' }, // 모바일에서는 꽉 채우고, 데스크탑에서는 최대 512px
+          }}
+        >
+          <Typography variant="h4" component="h2" sx={{
+            color: '#111418',
+            fontWeight: 'bold',
+            fontSize: '32px',
+            mb: 3, // mb-6 (tailwind)
+          }}>
+            Cover Preview
+          </Typography>
+          <Box sx={{ px: 4, py: 3, width: '100%' }}> {/* API Key 입력 필드 */}
+            <TextField
+              label="API Key (for cover image)"
+              type="password"
+              placeholder="Enter OpenAI API key"
+              value={apiKey}
+              onChange={handleApiKeyChange}
+              fullWidth
+              variant="outlined"
+              sx={{
+                '& .MuiOutlinedInput-root': { borderRadius: '12px', height: '56px', backgroundColor: 'white', '& fieldset': { borderColor: '#dbe0e6' }, '&:hover fieldset': { borderColor: '#dbe0e6' }, '&.Mui-focused fieldset': { borderColor: '#dbe0e6' } },
+                '& .MuiInputBase-input': { color: '#111418', padding: '15px', fontSize: '16px', fontWeight: 400 },
+                '& .MuiInputLabel-root': { color: '#111418', fontWeight: 500 },
+                '& .MuiInputBase-input::placeholder': { color: '#60758a', opacity: 1 },
+              }}
+            />
+          </Box>
+          <Button
+            onClick={handleGenerateImage}
+            disabled={imageGenerating || !apiKey || !formData.title}
+            variant="contained"
+            disableElevation
+            sx={{
+              mb: 2, // mb-4 (tailwind)
+              px: 3, py: 1, bgcolor: '#0c7ff2', color: 'white', borderRadius: '12px', fontWeight: 'semibold', textTransform: 'none',
+              '&:hover': { bgcolor: '#0a6ad1' },
+              '&.Mui-disabled': { opacity: 0.5, bgcolor: '#0c7ff2' } // disabled opacity
+            }}
+          >
+            {imageGenerating ? <CircularProgress size={24} color="inherit" /> : 'Generate Image'}
+          </Button>
+          {formData.coverUrl ? (
+            <Box
+              component="img"
+              src={formData.coverUrl}
+              alt="Generated cover"
+              sx={{
+                width: '100%',
+                maxWidth: '400px', // max-w-[400px]
+                borderRadius: '12px', // rounded-xl
+                border: '1px solid #dbe0e6', // border
+                height: 'auto', // 이미지 비율 유지
+                objectFit: 'cover', // 이미지 잘림 방지
+              }}
+            />
+          ) : (
+            <Typography sx={{ color: '#60758a', fontSize: '0.875rem' }}>No image generated</Typography>
+          )}
+        </Box>
       </Box>
 
-      <Footer /> {/* 푸터 재사용 */}
+      {/* Footer 임시 구현 (실제로는 src/components/Footer.jsx에서 import) */}
+      <Box sx={{ mt: 'auto', py: 3, borderTop: '1px solid #f0f2f5', textAlign: 'center', color: '#60758a', fontSize: '0.875rem' }}>
+        © 2025 Book Manager. All rights reserved.
+      </Box>
 
       {/* 알림 메시지 (Snackbar) */}
       <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleSnackbarClose}>
