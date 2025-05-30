@@ -25,6 +25,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+#root{
+  padding:0 !important
+}
+
 a {
   font-weight: 500;
   color: #646cff;
