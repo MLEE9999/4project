@@ -55,7 +55,7 @@ const shallowEqual = (objA, objB) => {
 };
 
 
-function BookUpdate() {
+function UpdateBookPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [initialFormData, setInitialFormData] = useState(null); // 1. 초기 데이터 저장용 state
@@ -411,4 +411,4 @@ function BookUpdate() {
   );
 }
 
-export default BookUpdate;
+export default UpdateBookPage;

@@ -35,7 +35,7 @@ import {
   DetailDeleteButton,
 } from './styles'; // Corrected import path
 
-function BookDetail() {
+function BookDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [book, setBook] = useState(null);
@@ -200,4 +200,4 @@ function BookDetail() {
   );
 }
 
-export default BookDetail;
+export default BookDetailPage;

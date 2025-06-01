@@ -28,7 +28,7 @@ import {
   EmptyStateBox, // For "No books found" message
 } from './styles'; // Import from ../styles
 
-const BookList = () => {
+const ViewBooksPage = () => {
   const navigate = useNavigate();
   const [books, setBooks] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -181,4 +181,4 @@ const BookList = () => {
   );
 };
 
-export default BookList;
+export default ViewBooksPage;
