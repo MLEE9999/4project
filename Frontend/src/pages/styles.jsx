@@ -141,16 +141,16 @@ export const SubmitButtonWrapper = styled(Box)(({ theme }) => ({ // Used in AddB
 }));
 
 export const ImagePreviewContainer = styled(Box)(({ theme }) => ({ // Used in AddBookPage
-  flex: 1,
+  flex: 'none',
+  width: '100%', // 기본 (모바일 - 세로 정렬 시)
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'flex-start',
-  paddingTop: theme.spacing(5),
-  paddingBottom: theme.spacing(5),
-  maxWidth: '100%',
-  [theme.breakpoints.up('md')]: {
-    maxWidth: '512px',
+  marginTop: theme.spacing(5), // 세로 정렬 시 상단 마진 (UpdateLeftSection과의 간격은 부모의 gap으로 처리)
+  [theme.breakpoints.up('lg')]: { // UpdateFormContainer의 flexDirection이 'row'로 바뀌는 중단점과 일치
+    width: '400px', // 가로 정렬 시 고정 너비
+    marginTop: 0, // 가로 정렬 시 상단 마진 없음
   },
 }));
 
@@ -176,19 +176,7 @@ export const NoImageText = styled(Typography)({ // Used in AddBookPage
 
 
 
-export const UpdateRightSection = styled(Box)(({ theme }) => ({
-  flex: 'none',
-  width: '100%', // 기본 (모바일 - 세로 정렬 시)
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'flex-start',
-  marginTop: theme.spacing(5), // 세로 정렬 시 상단 마진 (UpdateLeftSection과의 간격은 부모의 gap으로 처리)
-  [theme.breakpoints.up('lg')]: { // UpdateFormContainer의 flexDirection이 'row'로 바뀌는 중단점과 일치
-    width: '400px', // 가로 정렬 시 고정 너비
-    marginTop: 0, // 가로 정렬 시 상단 마진 없음
-  },
-}));
+
 export const SectionHeader = styled(Box)(({ theme }) => ({ // Used in Update Page for Title + Tooltip
   display: 'flex',
   alignItems: 'center',

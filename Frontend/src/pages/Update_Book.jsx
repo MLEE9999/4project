@@ -1,8 +1,7 @@
 // src/pages/Update_Book.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react"; // useCallback 추가
 import { useParams, useNavigate } from 'react-router-dom';
 import { CircularProgress, MenuItem, Snackbar } from '@mui/material';
-// MuiAlert is now StyledMuiAlert
 import AppBar from '../components/AppBar';
 import Footer from '../components/Footer';
 import { getBookById, partialUpdateBook, generateBookCoverImage } from '../api';
@@ -13,35 +12,53 @@ import {
   StyledTextField,
   MainContentContainer,
   FormContainer ,
-  UpdateRightSection,
   SectionHeader,
   TooltipIcon,
   TooltipText,
   FormFieldsContainer,
-  InputFieldWrapper, // Re-using InputFieldWrapper
+  InputFieldWrapper,
   ButtonContainer,
   CancelButton,
   UpdateButton,
   GenerateButton,
-  CoverImage, // Using the generalized CoverImage
+  CoverImage,
   NoImagePlaceholder,
+  ImagePreviewContainer, // Update_Book.jsx 에서는 ImagePreviewContainer 사용
   LoadingContainer,
   ErrorContainer,
   ApiKeyInputWrapper,
-  StyledMuiAlert, // Using the styled Alert
-} from '../pages/styles'; // Corrected import path
+  StyledMuiAlert,
+} from '../pages/styles';
 
 const CATEGORY_OPTIONS = [
   { value: 'NOVELS', label: 'Novels' },
   { value: 'POETRY', label: 'Poetry' },
   { value: 'COOKING', label: 'Cooking' },
-  { value: 'HEALTH', label: 'Health' },
+  { value: 'HEALTH', 'label': 'Health' },
   { value: 'TECHNOLOGY', label: 'Technology' },
 ];
+
+// 간단한 객체 비교 함수 (얕은 비교)
+const shallowEqual = (objA, objB) => {
+  if (objA === objB) return true;
+  if (!objA || !objB) return false;
+
+  const keysA = Object.keys(objA);
+  const keysB = Object.keys(objB);
+
+  if (keysA.length !== keysB.length) return false;
+
+  for (let key of keysA) {
+    if (objA[key] !== objB[key]) return false;
+  }
+  return true;
+};
+
 
 function BookUpdate() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [initialFormData, setInitialFormData] = useState(null); // 1. 초기 데이터 저장용 state
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -59,17 +76,33 @@ function BookUpdate() {
     severity: 'success',
   });
 
+  // 2. 변경 여부 확인 함수 (useCallback으로 최적화)
+  const hasFormChanged = useCallback(() => {
+    if (!initialFormData) return false; // 초기 데이터가 없으면 변경된 것으로 간주하지 않음
+    // formData에서 initialFormData에 있는 키들만 비교
+    const relevantFormData = {
+        title: formData.title,
+        content: formData.content,
+        coverUrl: formData.coverUrl,
+        category: formData.category,
+    };
+    return !shallowEqual(initialFormData, relevantFormData);
+  }, [initialFormData, formData]);
+
+
   useEffect(() => {
     if (id) {
       setLoading(true);
       getBookById(id)
         .then(res => {
-          setFormData({
-            title: res.title || '', // Ensure initial values are not undefined
+          const fetchedData = {
+            title: res.title || '',
             content: res.content || '',
             coverUrl: res.coverUrl || '',
             category: res.category || '',
-          });
+          };
+          setFormData(fetchedData);
+          setInitialFormData(fetchedData); // 1. 초기 데이터 저장
           setLoading(false);
         })
         .catch(err => {
@@ -100,7 +133,7 @@ function BookUpdate() {
     setImageGenerating(true);
     try {
       const imageUrl = await generateBookCoverImage(formData.title, apiKey);
-      setFormData((prevData) => ({ ...prevData, coverUrl: imageUrl }));
+      setFormData((prevData) => ({ ...prevData, coverUrl: imageUrl })); // coverUrl 변경 시 hasFormChanged가 true가 됨
       setSnackbar({ open: true, message: 'Image generated successfully!', severity: 'success' });
     } catch (error) {
       console.error('Image generation failed:', error);
@@ -113,7 +146,15 @@ function BookUpdate() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setError(null); // Clear previous errors
+    setError(null);
+
+    // 3. 변경 여부 확인
+    if (!hasFormChanged()) {
+      setSnackbar({ open: true, message: '변경된 내용이 없습니다.', severity: 'info' });
+      setSaving(false);
+      return;
+    }
+
     try {
       if (!formData.category) {
         setSnackbar({ open: true, message: 'Please select a category.', severity: 'warning' });
@@ -122,6 +163,8 @@ function BookUpdate() {
       }
       await partialUpdateBook(id, formData);
       setSnackbar({ open: true, message: '책이 성공적으로 업데이트되었습니다!', severity: 'success' });
+      // 업데이트 성공 시 initialFormData도 현재 formData로 갱신
+      setInitialFormData(formData);
       setTimeout(() => {
         navigate(`/books/${id}`);
       }, 2000);
@@ -140,7 +183,7 @@ function BookUpdate() {
   };
 
   const handleCancel = () => {
-    navigate(-1); // Go back to the previous page
+    navigate(-1);
   };
 
   const handleSnackbarClose = (event, reason) => {
@@ -150,8 +193,8 @@ function BookUpdate() {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  if (loading) {
-    return ( // Wrap in PageContainer for consistent AppBar/Footer if desired, or just LoadingContainer for centered content
+  if (loading && !initialFormData) { // 초기 로딩 중일 때만 표시
+    return (
       <PageContainer>
         <AppBar />
         <LoadingContainer>
@@ -174,6 +217,16 @@ function BookUpdate() {
     );
   }
 
+  // 4. 버튼 비활성화 조건에 !hasFormChanged() 추가
+  const isUpdateButtonDisabled =
+    !formData.title ||
+    !formData.content ||
+    !formData.category ||
+    !formData.coverUrl ||
+    saving ||
+    imageGenerating ||
+    !hasFormChanged(); // 내용 변경이 없으면 비활성화
+
   return (
     <PageContainer>
       <AppBar />
@@ -181,7 +234,7 @@ function BookUpdate() {
       <MainContentContainer component="form" onSubmit={handleSubmit}>
         <FormContainer >
           <SectionHeader>
-            <SectionTitle component="h2"> {/* Use h2 for semantic section titles */}
+            <SectionTitle component="h2">
               Update Book
             </SectionTitle>
             <TooltipIcon>
@@ -197,13 +250,13 @@ function BookUpdate() {
                 </svg>
               </div>
               <TooltipText className="tooltip">
-                제목, 소개 글, 카테고리가 모두 입력되고 이미지가 생성되면 도서 수정 버튼이 활성화 됩니다.
+                변경된 내용이 있을 경우에만 도서 수정 버튼이 활성화 됩니다.
               </TooltipText>
             </TooltipIcon>
           </SectionHeader>
 
-          <FormFieldsContainer> {/* This wraps InputFieldWrappers */}
-            <InputFieldWrapper> {/* Re-using InputFieldWrapper */}
+          <FormFieldsContainer>
+            <InputFieldWrapper>
               <StyledTextField
                 label="Title"
                 name="title"
@@ -215,11 +268,11 @@ function BookUpdate() {
                 variant="outlined"
                 inputProps={{ maxLength: 20 }}
                 helperText={`${formData.title.length}/20`}
-                helperTextAlignment="right" // Use the new prop
+                // helperTextAlignment="right" // 이 prop은 StyledTextField에 구현되어 있어야 합니다.
               />
             </InputFieldWrapper>
 
-            <InputFieldWrapper> {/* Re-using InputFieldWrapper */}
+            <InputFieldWrapper>
               <StyledTextField
                 label="Content"
                 name="content"
@@ -228,16 +281,16 @@ function BookUpdate() {
                 onChange={handleChange}
                 fullWidth
                 multiline
-                rows={4} // This will be overridden by minHeight in StyledTextField if .MuiTextField-multiline applies
+                rows={4}
                 variant="outlined"
-                className="MuiTextField-multiline" // To apply multiline specific styles from StyledTextField
+                className="MuiTextField-multiline"
                 inputProps={{ maxLength: 500 }}
                 helperText={`${formData.content.length}/500`}
-                helperTextAlignment="right" // Use the new prop
+                // helperTextAlignment="right"
               />
             </InputFieldWrapper>
 
-            <InputFieldWrapper> {/* Re-using InputFieldWrapper */}
+            <InputFieldWrapper>
               <StyledTextField
                 select
                 label="Category"
@@ -261,7 +314,7 @@ function BookUpdate() {
 
             <ButtonContainer>
               <CancelButton
-                variant="outlined" // Already part of CancelButton style
+                variant="outlined"
                 onClick={handleCancel}
                 disabled={saving || imageGenerating}
               >
@@ -269,8 +322,8 @@ function BookUpdate() {
               </CancelButton>
               <UpdateButton
                 type="submit"
-                variant="contained" // Already part of UpdateButton style
-                disabled={!formData.title || !formData.content || !formData.category || !formData.coverUrl || saving || imageGenerating}
+                variant="contained"
+                disabled={isUpdateButtonDisabled} // 수정된 비활성화 조건 사용
               >
                 {saving ? <CircularProgress size={24} color="inherit" /> : 'Update Book'}
               </UpdateButton>
@@ -278,9 +331,12 @@ function BookUpdate() {
           </FormFieldsContainer>
         </FormContainer >
 
-        <UpdateRightSection>
+        {/* ImagePreviewContainer는 AddBookPage와 유사한 구조를 가질 것으로 예상됩니다. */}
+        {/* Update_Book.jsx에 맞게 ImagePreviewContainer 또는 유사한 이름의 컴포넌트를 사용해주세요. */}
+        {/* 여기서는 AddBookPage의 ImagePreviewContainer 구조를 가져왔다고 가정합니다. */}
+        <ImagePreviewContainer>
           <SectionHeader>
-            <SectionTitle component="h2" className="cover-preview-title"> {/* Add className if specific margin is needed */}
+            <SectionTitle component="h2" className="cover-preview-title">
               Cover Preview
             </SectionTitle>
             <TooltipIcon>
@@ -314,7 +370,7 @@ function BookUpdate() {
           </ApiKeyInputWrapper>
 
           <GenerateButton
-            variant="contained" // Already part of GenerateButton style
+            variant="contained"
             onClick={handleGenerateImage}
             disabled={imageGenerating || !apiKey || !formData.title}
           >
@@ -325,29 +381,29 @@ function BookUpdate() {
             )}
           </GenerateButton>
 
-     {formData.coverUrl ? (
-          <CoverImage
-            component="img"
-            src={formData.coverUrl}
-            alt="생성된 표지"
-          />
-        ) : !imageGenerating ? (
-          <CoverImage
-            component="img"
-           src="/default-cover.png"
-            alt="기본 표지"
-          />
-        ) : (
-          <NoImagePlaceholder>
-            이미지 생성 중...
-          </NoImagePlaceholder>
-        )}
-        </UpdateRightSection>
+          {formData.coverUrl ? (
+            <CoverImage
+              component="img"
+              src={formData.coverUrl}
+              alt="생성된 표지"
+            />
+          ) : !imageGenerating ? (
+            <CoverImage
+              component="img"
+              src="/default-cover.png" // 기본 이미지 경로
+              alt="기본 표지"
+            />
+          ) : (
+            <NoImagePlaceholder>
+              이미지 생성 중...
+            </NoImagePlaceholder>
+          )}
+        </ImagePreviewContainer>
       </MainContentContainer>
 
       <Footer />
       <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleSnackbarClose}>
-        <StyledMuiAlert onClose={handleSnackbarClose} severity={snackbar.severity}>
+        <StyledMuiAlert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%'}}>
           {snackbar.message}
         </StyledMuiAlert>
       </Snackbar>
