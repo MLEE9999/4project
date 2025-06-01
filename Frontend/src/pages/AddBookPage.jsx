@@ -235,20 +235,43 @@ function AddBookPage() {
           </FormFieldsContainer>
         </FormContainer>
 
-        <ImagePreviewContainer>
-          <SectionTitle variant="h4" component="h2" className="cover-preview-title">
-            Cover Preview
-          </SectionTitle>
-          <ApiKeyInputWrapper>
-            <StyledTextField
-              label="API Key (for cover image)"
-              type="password"
-              placeholder="Enter OpenAI API key"
-              value={apiKey}
-              onChange={handleApiKeyChange}
-              fullWidth
-              variant="outlined"
-            />
+<ImagePreviewContainer>
+  {/* === 수정된 헤더 부분 시작 === */}
+  <SectionHeader>
+    <SectionTitle component="h2" className="cover-preview-title"> {/* Update_Book.jsx 예시를 따름 */}
+      Cover Preview
+    </SectionTitle>
+    <TooltipIcon>
+      <div className="icon-circle">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14px"
+          height="14px"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12 17.27L18.18 21 16.545 13.97 22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.455 4.73L5.82 21z" />
+        </svg>
+      </div>
+      <TooltipText className="tooltip">
+        {/* Update_Book.jsx 예시의 툴팁 텍스트를 사용합니다. */}
+        제목과 API 키 입력 후 'Generate Image' 버튼을 클릭 해 커버 이미지를 생성할 수 있습니다.
+      </TooltipText>
+    </TooltipIcon>
+  </SectionHeader>
+  {/* === 수정된 헤더 부분 끝 === */}
+
+  {/* === 기존 ImagePreviewContainer의 나머지 내용 시작 === */}
+  <ApiKeyInputWrapper>
+    <StyledTextField
+      label="API Key (for cover image)"
+      type="password"
+      placeholder="Enter OpenAI API key"
+      value={apiKey} 
+      onChange={handleApiKeyChange} 
+      fullWidth
+      variant="outlined"
+    />
           </ApiKeyInputWrapper>
           <GenerateButton
             onClick={handleGenerateImage}
