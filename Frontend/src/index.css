@@ -1,8 +1,40 @@
 /* src/index.css */
+/* 기본 (Light Mode) 색상 변수 및 테마 설정 */
+:root {
+  color-scheme: light; /* 브라우저에 Light Mode가 기본임을 알림 */
+  --text-color: #213547;
+  --background-color: #ffffff;
+  --link-color: #646cff; /* Light 모드 링크 색상 (기존과 동일) */
+  --link-hover-color: #747bff;
+  --button-background-color: #f9f9f9;
+}
 
-/* 1. html 요소가 뷰포트 전체 높이를 차지하도록 */
-html {
-  height: 100%;
+
+/* dark Mode일 때 색상 변수 재정의 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark; /* 브라우저에 Dark Mode임을 알림 */
+    --text-color: rgba(255, 255, 255, 0.87);
+    --background-color: #242424;
+    --link-color: #646cff;
+    --link-hover-color: #535bf2;
+    --button-background-color: #1a1a1a;
+    /* 다른 공통 색상 변수도 여기에 추가할 수 있습니다. */
+  }
+}
+
+body {
+  margin: 0; /* 브라우저 기본 마진 제거 */
+  display: flex; /* 자식 요소들을 Flexbox 아이템으로 만듦 */
+  flex-direction: column; /* 자식 요소들을 수직으로 쌓음 */
+  /* place-items: center; */ /* 필요에 따라 주석 해제하여 전체 내용을 중앙 정렬 */
+  min-width: 320px; /* 최소 너비 설정 (모바일 뷰포트 대응) */
+  min-height: 100vh; /* 뷰포트 전체 높이를 차지하도록 */
+  background-color: var(--background-color); /* 변수 사용 */
+  font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif; /* 기본 폰트 설정 */
+  color: var(--text-color); /* 변수 사용 */
+  -webkit-font-smoothing: antialiased; /* 폰트 안티앨리어싱 (웹킷) */
+  -moz-osx-font-smoothing: grayscale; /* 폰트 그레이스케일 안티앨리어싱 (파이어폭스) */
 }
 
 #root {
@@ -10,45 +42,23 @@ html {
   display: flex; /* #root가 App.jsx 내용을 위한 flex 컨테이너가 됨 */
   flex-direction: column; /* App.jsx 내부 요소들이 수직으로 쌓이도록 */
   min-height: 100%; /* #root가 자신의 부모(body)의 높이를 채우도록 */
-  /* 여기에 혹시 모를 max-width, width, margin, padding, text-align 속성이 있다면 모두 제거하세요! */
-}
-
-body {
-  margin: 0;
-  display: flex;
-  flex-direction: column; /* body의 자식 요소를 수직으로 쌓아주고, #root가 남은 공간을 채우기 쉽게 합니다. */
-  min-width: 320px;
-  min-height: 100vh; /* 뷰포트 전체 높이를 차지하도록 */
-  background-color: white;
-  font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-#root{
-  padding:0 !important
+  padding: 0 !important; /* 혹시 모를 기본/외부 패딩을 강제로 제거 */
+  /* 다른 레이아웃 관련 속성(max-width, width, margin, text-align)은 컴포넌트 내에서 관리하는 것이 좋습니다. */
 }
 
 a {
   font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+  color: var(--link-color); /* 변수 사용 */
+  text-decoration: inherit; /* 밑줄 등 기본 텍스트 데코레이션 상속 */
 }
 a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  /* place-items: center; */
-  min-width: 320px;
-  min-height: 100vh;
+  color: var(--link-hover-color); /* 변수 사용 */
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  /* Material UI를 사용한다면 h1 스타일은 MUI 테마의 Typography 설정을 활용하는 것이 더 좋습니다. */
 }
 
 button {
@@ -58,27 +68,14 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--button-background-color); /* 변수 사용 */
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s; /* 호버 시 테두리 색상 변화 애니메이션 */
 }
 button:hover {
-  border-color: #646cff;
+  border-color: var(--link-color); /* 호버 시 링크 색상과 동일하게 변경 (또는 별도 버튼 호버 색상 변수) */
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+  outline: 4px auto -webkit-focus-ring-color; /* 포커스 시 아웃라인 스타일 */
 }
