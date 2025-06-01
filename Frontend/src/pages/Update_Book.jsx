@@ -1,225 +1,357 @@
-import { useState } from "react";
-import Spinner from '../components/Spinner';
-import { launchFirework } from '/public/fireworks';
-import AppBar from '../components/AppBar'; // Import AppBar
-import Footer from '../components/Footer'; // Import Footer
+// src/pages/Update_Book.jsx
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from 'react-router-dom';
+import { CircularProgress, MenuItem, Snackbar } from '@mui/material';
+// MuiAlert is now StyledMuiAlert
+import AppBar from '../components/AppBar';
+import Footer from '../components/Footer';
+import { getBookById, partialUpdateBook, generateBookCoverImage } from '../api';
 
+import {
+  PageContainer,
+  SectionTitle,
+  StyledTextField,
+  MainContentContainer,
+  FormContainer ,
+  UpdateRightSection,
+  SectionHeader,
+  TooltipIcon,
+  TooltipText,
+  FormFieldsContainer,
+  InputFieldWrapper, // Re-using InputFieldWrapper
+  ButtonContainer,
+  CancelButton,
+  UpdateButton,
+  GenerateButton,
+  CoverImage, // Using the generalized CoverImage
+  NoImagePlaceholder,
+  LoadingContainer,
+  ErrorContainer,
+  ApiKeyInputWrapper,
+  StyledMuiAlert, // Using the styled Alert
+} from '../pages/styles'; // Corrected import path
 
-function BookUpdate(props) {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [apiKey, setApiKey] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [count, setCount] = useState(0);
-  console.log(props.id)
+const CATEGORY_OPTIONS = [
+  { value: 'NOVELS', label: 'Novels' },
+  { value: 'POETRY', label: 'Poetry' },
+  { value: 'COOKING', label: 'Cooking' },
+  { value: 'HEALTH', label: 'Health' },
+  { value: 'TECHNOLOGY', label: 'Technology' },
+];
 
-  const handleFirework = (e) => {
-    const { clientX: x, clientY: y } = e;
-    setCount(prev=>prev+1)
-    if (count==9){
-      launchFirework(x, y);
+function BookUpdate() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    coverUrl: '',
+    category: '',
+  });
+  const [apiKey, setApiKey] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [imageGenerating, setImageGenerating] = useState(false);
+  const [error, setError] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      getBookById(id)
+        .then(res => {
+          setFormData({
+            title: res.title || '', // Ensure initial values are not undefined
+            content: res.content || '',
+            coverUrl: res.coverUrl || '',
+            category: res.category || '',
+          });
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Failed to load book details for update:", err);
+          setError("책 정보를 불러오는 데 실패했습니다.");
+          setLoading(false);
+        });
     }
+  }, [id]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
 
-  const generateImage = async () => {
-    if (!apiKey || !title) return;
+  const handleApiKeyChange = (e) => {
+    setApiKey(e.target.value);
+  };
 
-    setLoading(true);
-    setImageUrl("");
-
+  const handleGenerateImage = async () => {
+    if (!apiKey || !formData.title) {
+      setSnackbar({ open: true, message: 'Please enter a title and API Key to generate an image.', severity: 'warning' });
+      return;
+    }
+    setImageGenerating(true);
     try {
-      const response = await fetch("https://api.openai.com/v1/images/generations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "dall-e-3",
-          prompt: title,
-          size: "1024x1024",
-        }),
-      });
-
-      const data = await response.json();
-      const url = data?.data?.[0]?.url;
-      if (url) setImageUrl(url);
-    } catch (err) {
-      console.error("Image generation failed", err);
+      const imageUrl = await generateBookCoverImage(formData.title, apiKey);
+      setFormData((prevData) => ({ ...prevData, coverUrl: imageUrl }));
+      setSnackbar({ open: true, message: 'Image generated successfully!', severity: 'success' });
+    } catch (error) {
+      console.error('Image generation failed:', error);
+      setSnackbar({ open: true, message: `Image generation failed: ${error.message}`, severity: 'error' });
     } finally {
-      setLoading(false);
+      setImageGenerating(false);
     }
   };
 
-  const BackPage = () => {
-    /* Cancel 버튼 눌렀을 때 이전 화면으로 돌아가는 코드 */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null); // Clear previous errors
+    try {
+      if (!formData.category) {
+        setSnackbar({ open: true, message: 'Please select a category.', severity: 'warning' });
+        setSaving(false);
+        return;
+      }
+      await partialUpdateBook(id, formData);
+      setSnackbar({ open: true, message: '책이 성공적으로 업데이트되었습니다!', severity: 'success' });
+      setTimeout(() => {
+        navigate(`/books/${id}`);
+      }, 2000);
+    } catch (err) {
+      console.error('책 업데이트 실패:', err);
+      let errorMessage = '책 업데이트에 실패했습니다. 다시 시도해주세요.';
+      if (err.response && err.response.data && err.response.data.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleCancel = () => {
+    navigate(-1); // Go back to the previous page
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  if (loading) {
+    return ( // Wrap in PageContainer for consistent AppBar/Footer if desired, or just LoadingContainer for centered content
+      <PageContainer>
+        <AppBar />
+        <LoadingContainer>
+          <CircularProgress />
+        </LoadingContainer>
+        <Footer />
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer>
+        <AppBar />
+        <ErrorContainer>
+          {error}
+        </ErrorContainer>
+        <Footer />
+      </PageContainer>
+    );
+  }
 
   return (
-    <div
-      className="relative flex min-h-screen flex-col bg-white overflow-x-hidden"
-      style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}
-    >
-      <div className="layout-container flex h-full grow flex-col">
-        {/* Replace existing header with AppBar */}
-        <AppBar
-          // You might need to pass props to AppBar here if it needs to display
-          // navigation, search, or other dynamic content relevant to this page.
-          // For example, if you want the "Book Manager" title or "Home", "Books" links
-          // to be managed by AppBar.
-          // The firework button functionality can also be passed as a prop if AppBar should handle it.
-          // For now, I'm assuming AppBar will handle its own internal navigation/branding.
-        />
+    <PageContainer>
+      <AppBar />
 
-
-        <div className="flex flex-1 px-10 md:px-20 py-10 gap-10 min-h-[600px] flex-col md:flex-row">
-          <div className="flex-grow min-w-[300px]">
-            <div className="flex items-center mb-6 gap-2">
-              <p className="text-[32px] font-bold text-[#111418]">Update Book</p>
-              <div className="relative group cursor-pointer flex-shrink-0">
-                <div className="w-5 h-5 rounded-full border border-gray-300 bg-white shadow-sm flex items-center justify-center text-gray-500 group-hover:text-yellow-500">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-3.5 h-3.5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 17.27L18.18 21 16.545 13.97 22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.455 4.73L5.82 21z" />
-                  </svg>
-                </div>
-                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 rounded-md bg-gray-800 px-3 py-2 text-xs text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity shadow-lg">
-                  제목, 소개 글, api키, 이미지 생성이 모두 완료되면 도서 추가 버튼이 활성화 됩니다다
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-7 space-y-6">
-              <label className="flex flex-col">
-                <p className="text-base font-medium text-left pb-2">Title</p>
-                <div className="relative">
-                  <input
-                    placeholder="Enter book title"
-                    className="form-input w-full rounded-xl border border-[#dbe0e6] bg-white h-14 p-4 pr-12 text-base"
-                    value={title}
-                    onChange={(e) => {
-                      const input = e.target.value;
-                      if (input.length <= 20) setTitle(input);
-                    }}
-                  />
-                  <span className="absolute top-1 right-3 text-xs text-gray-500">
-                    {title.length}/20
-                  </span>
-                </div>
-              </label>
-
-              <label className="flex flex-col">
-                <p className="text-base font-medium text-left pb-2">Contents</p>
-                <div className="relative">
-                  <textarea
-                    placeholder="Enter contents"
-                    className="form-input w-full rounded-xl border border-[#dbe0e6] bg-white min-h-[170px] p-4 text-base resize-none"
-                    value={content}
-                    onChange={(e) => {
-                      const input = e.target.value;
-                      if (input.length <= 500) setContent(input);
-                    }}
-                  />
-                  <span className="absolute top-1 right-3 text-xs text-gray-500">
-                    {content.length}/500
-                  </span>
-                </div>
-
-              </label>
-
-              <label className="flex flex-col">
-                <p className="text-base font-medium text-left pb-2">API Key (for cover image)</p>
-                <input
-                  type="password"
-                  placeholder="Enter API key"
-                  className="form-input w-full rounded-xl border border-[#dbe0e6] bg-white h-14 p-4 text-base"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                />
-              </label>
-
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={BackPage}
-                  className="h-10 px-4 font-bold rounded-xl text-sm border border-gray-300 text-gray-700 bg-white hover:bg-gray-100"
+      <MainContentContainer component="form" onSubmit={handleSubmit}>
+        <FormContainer >
+          <SectionHeader>
+            <SectionTitle component="h2"> {/* Use h2 for semantic section titles */}
+              Update Book
+            </SectionTitle>
+            <TooltipIcon>
+              <div className="icon-circle">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14px"
+                  height="14px"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    // DB에 들어갈 내용용
-                    console.log({ title, content, apiKey, imageUrl });
-                  }}
-                  disabled={!title || !content || !apiKey || !imageUrl}
-                  className={`h-10 px-4 font-bold rounded-xl text-sm ${
-                    !title || !content || !apiKey || !imageUrl
-                      ? "bg-[#0c7ff2]/50 cursor-not-allowed text-white"
-                      : "bg-[#0c7ff2] text-white"
-                  }`}
-                >
-                  Add Book
-                </button>
+                  <path d="M12 17.27L18.18 21 16.545 13.97 22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.455 4.73L5.82 21z" />
+                </svg>
               </div>
-            </div>
-          </div>
+              <TooltipText className="tooltip">
+                제목, 소개 글, 카테고리가 모두 입력되고 이미지가 생성되면 도서 수정 버튼이 활성화 됩니다.
+              </TooltipText>
+            </TooltipIcon>
+          </SectionHeader>
 
-          <div className="flex-none w-full max-w-[400px] flex flex-col items-center justify-start mt-10 md:mt-0">
-            <div className="flex items-center mb-6 gap-2">
-              <p className="text-[32px] font-bold text-[#111418]">Cover Preview</p>
-              <div className="relative group cursor-pointer flex-shrink-0">
-                <div className="w-5 h-5 rounded-full border border-gray-300 bg-white shadow-sm flex items-center justify-center text-gray-500 group-hover:text-yellow-500">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-3.5 h-3.5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 17.27L18.18 21 16.545 13.97 22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.455 4.73L5.82 21z" />
-                  </svg>
-                </div>
-                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 rounded-md bg-gray-800 px-3 py-2 text-xs text-white opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity shadow-lg text-center">
-                  제목과 API 키 입력 후 'Generate Image' 버튼을 클릭 해 커버 이미지를 생성할 수 있습니다.
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={generateImage}
-              disabled={loading || !apiKey || !title}
-              className="mb-4 px-6 py-2 bg-[#0c7ff2] text-white rounded-xl font-semibold disabled:opacity-50"
-            >
-              {loading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <Spinner />
-                  Generating...
-                </div>
-              ) : (
-                "Generate Image"
-              )}
-            </button>
-
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt="Generated cover"
-                className="w-full max-w-[400px] h-[400px] rounded-xl border object-cover"
+          <FormFieldsContainer> {/* This wraps InputFieldWrappers */}
+            <InputFieldWrapper> {/* Re-using InputFieldWrapper */}
+              <StyledTextField
+                label="Title"
+                name="title"
+                placeholder="Enter book title"
+                value={formData.title}
+                onChange={handleChange}
+                fullWidth
+                required
+                variant="outlined"
+                inputProps={{ maxLength: 20 }}
+                helperText={`${formData.title.length}/20`}
+                helperTextAlignment="right" // Use the new prop
               />
-            ) : (
-              <div className="w-full max-w-[400px] h-[400px] rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-[#60758a] text-sm">
-                No image generated
+            </InputFieldWrapper>
+
+            <InputFieldWrapper> {/* Re-using InputFieldWrapper */}
+              <StyledTextField
+                label="Content"
+                name="content"
+                placeholder="Enter book content or description"
+                value={formData.content}
+                onChange={handleChange}
+                fullWidth
+                multiline
+                rows={4} // This will be overridden by minHeight in StyledTextField if .MuiTextField-multiline applies
+                variant="outlined"
+                className="MuiTextField-multiline" // To apply multiline specific styles from StyledTextField
+                inputProps={{ maxLength: 500 }}
+                helperText={`${formData.content.length}/500`}
+                helperTextAlignment="right" // Use the new prop
+              />
+            </InputFieldWrapper>
+
+            <InputFieldWrapper> {/* Re-using InputFieldWrapper */}
+              <StyledTextField
+                select
+                label="Category"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                fullWidth
+                required
+                variant="outlined"
+              >
+                <MenuItem value="" disabled>
+                  Select a category
+                </MenuItem>
+                {CATEGORY_OPTIONS.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </StyledTextField>
+            </InputFieldWrapper>
+
+            <ButtonContainer>
+              <CancelButton
+                variant="outlined" // Already part of CancelButton style
+                onClick={handleCancel}
+                disabled={saving || imageGenerating}
+              >
+                Cancel
+              </CancelButton>
+              <UpdateButton
+                type="submit"
+                variant="contained" // Already part of UpdateButton style
+                disabled={!formData.title || !formData.content || !formData.category || !formData.coverUrl || saving || imageGenerating}
+              >
+                {saving ? <CircularProgress size={24} color="inherit" /> : 'Update Book'}
+              </UpdateButton>
+            </ButtonContainer>
+          </FormFieldsContainer>
+        </FormContainer >
+
+        <UpdateRightSection>
+          <SectionHeader>
+            <SectionTitle component="h2" className="cover-preview-title"> {/* Add className if specific margin is needed */}
+              Cover Preview
+            </SectionTitle>
+            <TooltipIcon>
+              <div className="icon-circle">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14px"
+                  height="14px"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 17.27L18.18 21 16.545 13.97 22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.455 4.73L5.82 21z" />
+                </svg>
               </div>
+              <TooltipText className="tooltip">
+                제목과 API 키 입력 후 'Generate Image' 버튼을 클릭 해 커버 이미지를 생성할 수 있습니다.
+              </TooltipText>
+            </TooltipIcon>
+          </SectionHeader>
+
+          <ApiKeyInputWrapper>
+            <StyledTextField
+              label="API Key (for cover image)"
+              type="password"
+              placeholder="Enter OpenAI API key"
+              value={apiKey}
+              onChange={handleApiKeyChange}
+              fullWidth
+              variant="outlined"
+            />
+          </ApiKeyInputWrapper>
+
+          <GenerateButton
+            variant="contained" // Already part of GenerateButton style
+            onClick={handleGenerateImage}
+            disabled={imageGenerating || !apiKey || !formData.title}
+          >
+            {imageGenerating ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              "Generate Image"
             )}
-          </div>
-        </div>
-      </div>
-      {/* Add Footer component */}
+          </GenerateButton>
+
+     {formData.coverUrl ? (
+          <CoverImage
+            component="img"
+            src={formData.coverUrl}
+            alt="생성된 표지"
+          />
+        ) : !imageGenerating ? (
+          <CoverImage
+            component="img"
+           src="/default-cover.png"
+            alt="기본 표지"
+          />
+        ) : (
+          <NoImagePlaceholder>
+            이미지 생성 중...
+          </NoImagePlaceholder>
+        )}
+        </UpdateRightSection>
+      </MainContentContainer>
+
       <Footer />
-    </div>
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <StyledMuiAlert onClose={handleSnackbarClose} severity={snackbar.severity}>
+          {snackbar.message}
+        </StyledMuiAlert>
+      </Snackbar>
+    </PageContainer>
   );
 }
 
