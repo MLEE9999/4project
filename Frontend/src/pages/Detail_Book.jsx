@@ -1,116 +1,203 @@
-import { useNavigate, useParams } from 'react-router-dom'
-import React from 'react';
-import AppBar from '../components/AppBar'; // Import AppBar
-import Footer from '../components/Footer'; // Import Footer
+// src/pages/BookDetail.jsx
+import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { CircularProgress, Typography } from '@mui/material'; // Button might not be needed if using styled
+import AppBar from '../components/AppBar';
+import Footer from '../components/Footer';
+import DeleteBookDialog from '../components/DeleteBookDialog';
+import { getBookById } from '../api';
+
+import {
+  PageContainer,
+  SectionTitle, // Can be used for the main book title
+  LoadingContainer,
+  ErrorContainer,
+  CenteredMessageContainer,
+  DetailContentWrapper,
+  DetailInnerContainer,
+  BreadcrumbsContainer,
+  BreadcrumbLink,
+  BreadcrumbText,
+  DetailTitleContentBox,
+  DetailTitleWrapper,
+  BookShortContent,
+  DetailImageSectionWrapper,
+  DetailImageTextContainer,
+  DetailBookCoverImage,
+  DetailTextContentBox,
+  DetailBookTitle, // More specific title style for this context
+  DetailMetaBox,
+  DetailMetaInnerBox,
+  BookContentText,
+  DetailButtonsOuterContainer,
+  DetailButtonsInnerContainer,
+  DetailEditButton,
+  DetailDeleteButton,
+} from '../pages/styles'; // Corrected import path
 
 function BookDetail() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const [book, setBook] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      getBookById(id)
+        .then(res => {
+          setBook(res);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Failed to load book details:", err);
+          setError("책 정보를 불러오는 데 실패했습니다.");
+          setLoading(false);
+        });
+    }
+  }, [id]);
+
+  const handleEditClick = () => {
+    navigate(`/books/${id}/edit`);
+  };
 
   const handleDeleteClick = () => {
-    navigate(`/books/delete`)
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteSuccess = () => {
+    navigate('/books');
+  };
+
+  if (loading) {
+    return (
+      <PageContainer> {/* Wrap loading/error states in PageContainer for consistent AppBar/Footer */}
+        <AppBar />
+        <LoadingContainer>
+          <CircularProgress />
+        </LoadingContainer>
+        <Footer />
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer>
+        <AppBar />
+        <ErrorContainer>
+          {error}
+        </ErrorContainer>
+        <Footer />
+      </PageContainer>
+    );
+  }
+
+  if (!book) {
+    return (
+      <PageContainer>
+        <AppBar />
+        <CenteredMessageContainer>
+          책을 찾을 수 없습니다.
+        </CenteredMessageContainer>
+        <Footer />
+      </PageContainer>
+    );
   }
 
   return (
-    <>
-      {/* These link tags are generally better placed in the public/index.html or equivalent */}
-      <link rel="preconnect" href="https://fonts.gstatic.com/" crossOrigin="" />
-      <link
-        rel="stylesheet"
-        as="style"
-        onLoad="this.rel='stylesheet'"
-        href="https://fonts.googleapis.com/css2?display=swap&family=Noto+Sans%3Awght%40400%3B500%3B700%3B900&family=Plus+Jakarta+Sans%3Awght%40400%3B500%3B700%3B800"
+    <PageContainer>
+      <AppBar />
+
+      <DetailContentWrapper>
+        <DetailInnerContainer>
+          <BreadcrumbsContainer>
+            <BreadcrumbLink component="a" href="/books"> {/* Assuming /books is the list page */}
+              Books
+            </BreadcrumbLink>
+            <BreadcrumbText>/</BreadcrumbText>
+            <BreadcrumbText className="current">
+              {book.title}
+            </BreadcrumbText>
+          </BreadcrumbsContainer>
+
+          <DetailTitleContentBox>
+            <DetailTitleWrapper>
+              {/* Use SectionTitle for consistency if style matches, or a more specific styled title */}
+              <SectionTitle component="h1" sx={{fontSize: '32px', pt:0, pb:0, pl:0 /* These are defaults for SectionTitle now*/}}>
+                {book.title}
+              </SectionTitle>
+              <BookShortContent>
+                {book.content && book.content.length > 100 ? `${book.content.substring(0, 100)}...` : book.content}
+              </BookShortContent>
+            </DetailTitleWrapper>
+          </DetailTitleContentBox>
+
+          <DetailImageSectionWrapper>
+            <DetailImageTextContainer>
+           <DetailBookCoverImage
+                component="img"
+                src={book.coverUrl || '/default-cover.png'} // coverUrl이 없으면 기본 이미지 표시
+                alt={`${book.title} 표지`} // alt 텍스트 한국어로 수정
+                onError={(e) => {
+                  // book.coverUrl 로딩 실패 시 기본 이미지로 대체
+                  if (e.target.src !== `${window.location.origin}/default-cover.png`) {
+                    e.target.onerror = null; // 무한 루프 방지
+                    e.target.src = '/default-cover.png';
+                  }
+                }}
+              />
+              <DetailTextContentBox>
+                <DetailBookTitle>
+                  {book.title}
+                </DetailBookTitle>
+                <DetailMetaBox>
+                  <DetailMetaInnerBox>
+                    <BookContentText>
+                      {book.content}
+                    </BookContentText>
+                    <BookContentText component="div"> {/* Use div if it might contain block elements or for semantic grouping */}
+                      Category: {book.category || 'Unknown Category'}
+                    </BookContentText>
+                  </DetailMetaInnerBox>
+                </DetailMetaBox>
+              </DetailTextContentBox>
+            </DetailImageTextContainer>
+          </DetailImageSectionWrapper>
+
+          <DetailButtonsOuterContainer>
+            <DetailButtonsInnerContainer>
+              <DetailEditButton
+                variant="contained" // Base variant from style, can be omitted if default
+                disableElevation // Base elevation from style
+                onClick={handleEditClick}
+              >
+                Edit
+              </DetailEditButton>
+              <DetailDeleteButton
+                variant="contained"
+                disableElevation
+                onClick={handleDeleteClick}
+              >
+                Delete
+              </DetailDeleteButton>
+            </DetailButtonsInnerContainer>
+          </DetailButtonsOuterContainer>
+        </DetailInnerContainer>
+      </DetailContentWrapper>
+
+      <DeleteBookDialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        bookId={id}
+        onDeleteSuccess={handleDeleteSuccess}
       />
-      <title>Stitch Design</title>
-      <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
 
-      <div
-        className="relative flex size-full min-h-screen flex-col bg-white group/design-root overflow-x-hidden"
-        style={{ fontFamily: '"Plus Jakarta Sans", "Noto Sans", sans-serif' }}
-      >
-        <div className="layout-container flex h-full grow flex-col">
-          {/* Replace existing header with AppBar */}
-          <AppBar
-            // You might want to pass props to your AppBar component
-            // For example, if AppBar needs to know the current active navigation link,
-            // or if it has a bell icon that needs a specific handler.
-          />
-
-          <div className="px-40 flex flex-1 justify-center py-5">
-            <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
-              <div className="flex flex-wrap gap-2 p-4">
-                <a
-                  className="text-[#60758a] text-base font-medium leading-normal"
-                  href="#"
-                >
-                  Books
-                </a>
-                <span className="text-[#60758a] text-base font-medium leading-normal">
-                  /
-                </span>
-                <span className="text-[#111418] text-base font-medium leading-normal">
-                  The Silent Observer
-                </span>
-              </div>
-              <div className="flex flex-wrap justify-between gap-3 p-4">
-                <div className="flex min-w-72 flex-col gap-3">
-                  <p className="text-[#111418] tracking-light text-[32px] font-bold leading-tight">
-                    The Silent Observer
-                  </p>
-                  <p className="text-[#60758a] text-sm font-normal leading-normal">
-                    By Amelia Stone
-                  </p>
-                </div>
-              </div>
-              <div className="p-4 @container">
-                <div className="flex flex-col items-stretch justify-start rounded-xl @xl:flex-row @xl:items-start">
-                  <div
-                    className="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-xl"
-                    style={{
-                      backgroundImage:
-                        'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCrE8vdBhVdMTLOxyzJTbgISuSuY7oU7sGKyrXjyoBPlV9vDZzGvLYTQ_kZ1H3xytp5Gj_Z0gfhgShhsGyR40v_7MpQEkUt9pAfc28BPTA7UTSldohJtFfQg8dCANP6SSzgsTZh_GSD42toZf5KqwF7jP9PahBhD_gEf8HBolrcFaWs4urzOTi5Y2NdZktdtOlYRtVzUfe4tOHjs4hSYBqhP_InpGreGL-QjCoQqghhKIDnjsJMb4AQG_u4Q3spgtpoWNBmJfvpeHBx")'
-                    }}
-                  />
-                  <div className="flex w-full min-w-72 grow flex-col items-stretch justify-center gap-1 py-4 @xl:px-4">
-                    <p className="text-[#111418] text-lg font-bold leading-tight tracking-[-0.015em]">
-                      The Silent Observer
-                    </p>
-                    <div className="flex items-end gap-3 justify-between">
-                      <div className="flex flex-col gap-1">
-                        <p className="text-[#60758a] text-base font-normal leading-normal">
-                          A gripping tale of suspense and intrigue, where a
-                          reclusive observer becomes entangled in a web of secrets
-                          and danger.
-                        </p>
-                        <p className="text-[#60758a] text-base font-normal leading-normal">
-                          Mystery
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-stretch">
-                <div className="flex flex-1 gap-3 flex-wrap px-4 py-3 justify-start">
-                  <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-bold leading-normal tracking-[0.015em]">
-                    <span className="truncate">Edit</span>
-                  </button>
-                  <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-bold leading-normal tracking-[0.015em]">
-                    <span className="truncate">Create Cover</span>
-                  </button>
-                  <button onClick={handleDeleteClick}
-                  className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#f0f2f5] text-[#111418] text-sm font-bold leading-normal tracking-[0.015em]">
-                    <span className="truncate">Delete</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* Add Footer component */}
-        <Footer />
-      </div>
-    </>
-  )
+      <Footer />
+    </PageContainer>
+  );
 }
 
-export default BookDetail
+export default BookDetail;
