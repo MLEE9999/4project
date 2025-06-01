@@ -23,7 +23,7 @@ import {
   GenerateButton,
   CoverImage,
   NoImagePlaceholder,
-  ImagePreviewContainer, // Update_Book.jsx 에서는 ImagePreviewContainer 사용
+  ImagePreviewContainer,
   LoadingContainer,
   ErrorContainer,
   ApiKeyInputWrapper,

@@ -27,7 +27,7 @@ public class Book {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Size(max = 255, message = "Cover URL cannot exceed 255 characters")
+    @Size(max = 2048, message = "Cover URL cannot exceed 2048 characters")
     private String coverUrl;
 
     @NotNull(message = "Category cannot be null")
