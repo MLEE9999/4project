@@ -13,7 +13,7 @@ public class BookCreateRequest {
     @Size(max = 255, message = "Title cannot exceed 255 characters")
     private String title;
     private String content;
-    @Size(max = 255, message = "Cover URL cannot exceed 255 characters")
+    @Size(max = 2048, message = "Cover URL cannot exceed 2048 characters")
     private String coverUrl;
     @NotNull(message = "Category is required")
     private CategoryEnum category;

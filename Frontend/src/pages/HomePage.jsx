@@ -109,7 +109,6 @@ function HomePage() {
               {error}
             </ErrorDisplayBox>
           ) : featuredBooks.length > 0 ? (
-            // ✨ 이 부분을 수정하여 카드들을 감싸고 스타일을 적용합니다. ✨
             <Box
               sx={{
                 display: 'flex',

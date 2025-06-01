@@ -26,7 +26,7 @@ import {
   TableDeleteActionButton,
   NoDataCell,
   EmptyStateBox, // For "No books found" message
-} from '../pages/styles'; // Import from ../styles
+} from './styles'; // Import from ../styles
 
 const BookList = () => {
   const navigate = useNavigate();
