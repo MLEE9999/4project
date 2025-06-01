@@ -33,7 +33,7 @@ import {
   DetailButtonsInnerContainer,
   DetailEditButton,
   DetailDeleteButton,
-} from '../pages/styles'; // Corrected import path
+} from './styles'; // Corrected import path
 
 function BookDetail() {
   const navigate = useNavigate();
@@ -200,4 +200,4 @@ function BookDetail() {
   );
 }
 
-export default BookDetail;
+export default BookDetailPage;

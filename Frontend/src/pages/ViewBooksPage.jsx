@@ -1,4 +1,4 @@
-// src/pages/List_Book.jsx
+// src/pages/ViewBooksPage.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { Box, Table, TableBody, TableRow, CircularProgress } from "@mui/material"; // Removed unused Typography, Button, TableCell, TableHead
@@ -181,4 +181,4 @@ const BookList = () => {
   );
 };
 
-export default BookList;
+export default ViewBooksPage;

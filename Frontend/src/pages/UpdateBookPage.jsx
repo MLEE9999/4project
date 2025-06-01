@@ -28,7 +28,7 @@ import {
   ErrorContainer,
   ApiKeyInputWrapper,
   StyledMuiAlert,
-} from '../pages/styles';
+} from './styles';
 
 const CATEGORY_OPTIONS = [
   { value: 'NOVELS', label: 'Novels' },
@@ -411,4 +411,4 @@ function BookUpdate() {
   );
 }
 
-export default BookUpdate;
+export default UpdateBookPage;
