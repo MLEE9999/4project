@@ -87,18 +87,7 @@ export const generateBookCoverImage = async (title, apiKey) => {
       },
       body: JSON.stringify({
         model: "dall-e-3",
-        prompt:  `
-   Create a high-quality 3D-rendered image of a single hardcover book standing upright.
-
-  The book is titled "${title}".
-  Its story is about: ${content}
-
-  Design the front cover to visually reflect the core feeling or theme of the story. Use symbolic or abstract imagery that conveys the mood — such as hope, loneliness, growth, mystery, or wonder — based on the story.
-
-  The cover should use artistic and metaphorical visuals that hint at the genre and tone without using any text or characters.
-
-  Keep the background simple and softly lit. Focus on making the book appear visually striking and emotionally resonant.
-  `, // 프롬프트 개선
+        prompt:  `Book cover for a book titled "${title}". Style: modern, minimalist, artistic.`, // 프롬프트 개선
         size: "1024x1024",
       }),
     });
