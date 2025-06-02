@@ -87,7 +87,7 @@ export const generateBookCoverImage = async (title, apiKey) => {
       },
       body: JSON.stringify({
         model: "dall-e-3",
-        prompt: `Book cover for a book titled "${title}". Style: modern, minimalist, artistic.`, // 프롬프트 개선
+        prompt:  `Book cover for a book titled "${title}". Style: modern, minimalist, artistic.`, // 프롬프트 개선
         size: "1024x1024",
       }),
     });
