@@ -525,7 +525,7 @@ export const DetailImageTextContainer = styled(Box)(({ theme }) => ({
 
 export const DetailBookCoverImage = styled(Box)(({ theme }) => ({ // component="img" will be applied on use
     width: '100%',
-    aspectRatio: '16 / 9',
+    aspectRatio: '9 / 6',
     objectFit: 'cover',
     borderRadius: '12px', // Already on DetailImageTextContainer, but can be here too for the img itself
     display: 'block',
