@@ -559,6 +559,7 @@ public class CorsConfig implements WebMvcConfigurer {
     * 백엔드 API (`getAllBooks`)를 호출하여 전체 도서 목록 중 2권을 무작위로 선택하여 'Featured Books' 섹션에 표시합니다.
     * `FeaturedBookCard` 컴포넌트를 사용하여 각 추천 도서의 정보를 카드 형태로 보여줍니다.
     * 데이터 로딩 및 오류 발생 시 사용자에게 적절한 UI(로딩 스피너, 에러 메시지)를 제공합니다.
+![alt text](mainpage.png)
 
 #### 2. `ViewBooksPage.jsx` (도서 목록 페이지)
 * 시스템에 등록된 모든 도서의 목록을 테이블 형태로 보여주고, 사용자가 도서를 관리할 수 있는 다양한 기능을 제공합니다.
@@ -570,6 +571,7 @@ public class CorsConfig implements WebMvcConfigurer {
         * **Edit**: 해당 도서의 수정 페이지(`UpdateBookPage`)로 이동합니다.
         * **Delete**: `DeleteBookDialog` 컴포넌트를 통해 도서 삭제를 수행합니다. (API: `deleteBook`)
     * 도서가 없을 경우 "No books found." 메시지를 표시합니다.
+![alt text](listbook.png)
 
 #### 3. `AddBookPage.jsx` (도서 추가 페이지)
 * 새로운 도서를 시스템에 추가하기 위한 폼과 기능을 제공합니다.
@@ -581,6 +583,7 @@ public class CorsConfig implements WebMvcConfigurer {
     * 필수 정보(제목, 카테고리 등)가 모두 입력되면 'Add Book' 버튼을 통해 `createBook` API를 호출하여 새 도서 정보를 백엔드 서버에 저장합니다.
     * 입력값 유효성 검사(예: 카테고리 선택 여부) 및 작업 결과(성공, 실패, 경고)를 사용자에게 Snackbar 메시지로 피드백합니다.
     * 'Cancel' 버튼을 통해 도서 추가를 취소하고 메인 페이지로 돌아갈 수 있습니다.
+![alt text](addbook.png)
 
 #### 4. `BookDetailPage.jsx` (도서 상세 정보 페이지)
 * 특정 도서 한 권에 대한 모든 상세 정보를 보여주는 페이지입니다.
@@ -591,6 +594,7 @@ public class CorsConfig implements WebMvcConfigurer {
     * 페이지 상단에는 "Books / {책 제목}" 형태의 **Breadcrumbs**를 제공하여 사용자의 현재 위치와 네비게이션 경로를 명확히 안내합니다.
     * **Edit** 버튼: 해당 도서의 정보를 수정할 수 있는 `UpdateBookPage`로 이동합니다.
     * **Delete** 버튼: `DeleteBookDialog`를 열어 해당 도서를 삭제할 수 있도록 합니다.
+![alt text](detailpage.png)
 
 #### 5. `UpdateBookPage.jsx` (도서 수정 페이지)
 * 기존에 등록된 도서의 정보를 수정하는 기능을 제공합니다.
@@ -602,7 +606,8 @@ public class CorsConfig implements WebMvcConfigurer {
     * 'Update Book' 버튼 클릭 시 `partialUpdateBook` API를 사용하여 변경된 필드만 백엔드 서버로 전송하여 도서 정보를 업데이트합니다.
     * 입력값 유효성 검사 및 작업 결과를 Snackbar 메시지로 피드백합니다.
     * 'Cancel' 버튼을 통해 수정을 취소하고 이전 페이지(일반적으로 해당 도서의 상세 페이지)로 돌아갈 수 있습니다.
-
+![alt text](updatebook.png)
+ 
 ### API 연동 (`api.js`)
 프론트엔드와 백엔드 서버 간의 모든 HTTP 통신은 `src/api.js` 파일에 정의된 함수들을 통해 표준화된 방식으로 이루어집니다. `axios` 라이브러리를 사용하여 RESTful API를 호출하며, 각 함수는 특정 API 엔드포인트와 매핑됩니다.
 
@@ -614,6 +619,7 @@ public class CorsConfig implements WebMvcConfigurer {
 * **`deleteBook(id)`**: `DELETE /api/books/{id}` - 특정 ID를 가진 도서 삭제. (응답: `void` 또는 `204 No Content`)
 * **`generateBookCoverImage(title, apiKey)`**: `POST https://api.openai.com/v1/images/generations` - DALL-E API를 직접 호출하여 주어진 제목에 대한 책 표지 이미지를 생성. (프론트엔드에서 OpenAI API 키 필요)
 
+ 
 ### 스타일링 (`styles.jsx`)
 애플리케이션의 전반적인 UI 디자인과 컴포넌트 스타일링은 **Material-UI (MUI)**의 `styled` API를 사용하여 `src/pages/styles.jsx` 파일에 중앙화되어 관리됩니다. 이를 통해 일관된 디자인 시스템을 유지하고 코드 재사용성을 높입니다.
 
