@@ -126,13 +126,13 @@ function UpdateBookPage() {
   };
 
   const handleGenerateImage = async () => {
-    if (!apiKey || !formData.title) {
+    if (!apiKey || !formData.title || !formData.content) {
       setSnackbar({ open: true, message: 'Please enter a title and API Key to generate an image.', severity: 'warning' });
       return;
     }
     setImageGenerating(true);
     try {
-      const imageUrl = await generateBookCoverImage(formData.title, apiKey);
+      const imageUrl = await generateBookCoverImage(formData.title,formData.content, apiKey);
       setFormData((prevData) => ({ ...prevData, coverUrl: imageUrl })); // coverUrl 변경 시 hasFormChanged가 true가 됨
       setSnackbar({ open: true, message: 'Image generated successfully!', severity: 'success' });
     } catch (error) {
@@ -372,7 +372,7 @@ function UpdateBookPage() {
           <GenerateButton
             variant="contained"
             onClick={handleGenerateImage}
-            disabled={imageGenerating || !apiKey || !formData.title}
+            disabled={imageGenerating || !apiKey || !formData.title || !formData.content}
           >
             {imageGenerating ? (
               <CircularProgress size={24} color="inherit" />
