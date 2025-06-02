@@ -16,10 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class BookService {
+public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
 
+    @Override
     @Transactional
     public Book createBook(BookCreateRequest request) {
         Book book = Book.builder()
@@ -31,6 +32,7 @@ public class BookService {
         return bookRepository.save(book);
     }
 
+    @Override
     public Page<Book> getAllBooks(String title, CategoryEnum category, Pageable pageable) {
         if (title != null && category != null) {
             return bookRepository.findByTitleContainingIgnoreCaseAndCategory(title, category, pageable);
@@ -43,11 +45,13 @@ public class BookService {
         }
     }
 
+    @Override
     public Book getBookById(Long id) {
         return bookRepository.findById(id)
                 .orElseThrow(() -> new BookNotFoundException("Book with ID " + id + " not found"));
     }
 
+    @Override
     @Transactional
     public Book updateBook(Long id, BookUpdateRequest request) {
         Book book = bookRepository.findById(id)
@@ -56,6 +60,7 @@ public class BookService {
         return book;
     }
 
+    @Override
     @Transactional
     public Book partialUpdateBook(Long id, BookPartialUpdateRequest request) {
         Book book = bookRepository.findById(id)
@@ -64,6 +69,7 @@ public class BookService {
         return book;
     }
 
+    @Override
     @Transactional
     public void deleteBook(Long id) {
         if (!bookRepository.existsById(id)) {

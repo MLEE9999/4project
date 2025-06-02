@@ -6,7 +6,7 @@ import com.aivle_17.library_management.dto.BookCreateRequest;
 import com.aivle_17.library_management.dto.BookPartialUpdateRequest;
 import com.aivle_17.library_management.dto.BookResponse;
 import com.aivle_17.library_management.dto.BookUpdateRequest;
-import com.aivle_17.library_management.service.BookService;
+import com.aivle_17.library_management.service.BookServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,11 +22,11 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class BookController {
 
-    private final BookService bookService;
+    private final BookServiceImpl bookServiceImpl;
 
     @PostMapping
     public ResponseEntity<BookResponse> createBook(@Valid @RequestBody BookCreateRequest request) {
-        Book book = bookService.createBook(request);
+        Book book = bookServiceImpl.createBook(request);
         return new ResponseEntity<>(BookResponse.from(book), HttpStatus.CREATED);
     }
 
@@ -41,32 +41,32 @@ public class BookController {
     ) {
         Sort sort = Sort.by(Sort.Direction.fromString(direction), sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<BookResponse> bookPage = bookService.getAllBooks(title, category, pageable)
+        Page<BookResponse> bookPage = bookServiceImpl.getAllBooks(title, category, pageable)
                 .map(BookResponse::from);
         return ResponseEntity.ok(bookPage);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<BookResponse> getBookById(@PathVariable Long id) {
-        Book book = bookService.getBookById(id);
+        Book book = bookServiceImpl.getBookById(id);
         return ResponseEntity.ok(BookResponse.from(book));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<BookResponse> updateBook(@PathVariable Long id, @Valid @RequestBody BookUpdateRequest request) {
-        Book updatedBook = bookService.updateBook(id, request);
+        Book updatedBook = bookServiceImpl.updateBook(id, request);
         return ResponseEntity.ok(BookResponse.from(updatedBook));
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<BookResponse> partialUpdateBook(@PathVariable Long id, @RequestBody BookPartialUpdateRequest request) {
-        Book updatedBook = bookService.partialUpdateBook(id, request);
+        Book updatedBook = bookServiceImpl.partialUpdateBook(id, request);
         return ResponseEntity.ok(BookResponse.from(updatedBook));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
-        bookService.deleteBook(id);
+        bookServiceImpl.deleteBook(id);
         return ResponseEntity.noContent().build();
     }
 }
