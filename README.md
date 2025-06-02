@@ -550,6 +550,9 @@ public class CorsConfig implements WebMvcConfigurer {
 ![alt text](image-11.png)
 #### 책 삭제 DELETE - 409 Conflict
 - 시스템이 복잡한 경우 충돌이 날 수도 있다.
+  
+### frontend 메인(HomePage.jsx)정의
+
 
 ## Skills
 - 백엔드 : Java, Spring Boot, Spring MVC (REST API), Spring Data JPA, Lombok
