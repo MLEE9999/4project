@@ -551,7 +551,81 @@ public class CorsConfig implements WebMvcConfigurer {
 #### 책 삭제 DELETE - 409 Conflict
 - 시스템이 복잡한 경우 충돌이 날 수도 있다.
   
-### frontend 메인(HomePage.jsx)정의
+### Frontend 주요 기능 및 페이지 설명
+
+#### 1. `HomePage.jsx` (메인 페이지)
+* 애플리케이션의 진입점으로, "걷기가 서재 - 작가의 산책"이라는 타이틀과 함께 주요 도서를 소개합니다.
+* **주요 기능**:
+    * 백엔드 API (`getAllBooks`)를 호출하여 전체 도서 목록 중 2권을 무작위로 선택하여 'Featured Books' 섹션에 표시합니다.
+    * `FeaturedBookCard` 컴포넌트를 사용하여 각 추천 도서의 정보를 카드 형태로 보여줍니다.
+    * 데이터 로딩 및 오류 발생 시 사용자에게 적절한 UI(로딩 스피너, 에러 메시지)를 제공합니다.
+
+#### 2. `ViewBooksPage.jsx` (도서 목록 페이지)
+* 시스템에 등록된 모든 도서의 목록을 테이블 형태로 보여주고, 사용자가 도서를 관리할 수 있는 다양한 기능을 제공합니다.
+* **주요 기능**:
+    * 백엔드 API (`getAllBooks`)를 통해 도서 목록을 조회합니다. `AppBar` 내 검색창을 통해 **도서 제목으로 실시간 검색**이 가능합니다.
+    * 테이블에는 각 도서의 제목, 카테고리, 생성 일시가 표시됩니다.
+    * 각 도서 항목마다 다음 액션을 수행할 수 있는 버튼을 제공합니다:
+        * **View Details**: 해당 도서의 상세 정보 페이지(`BookDetailPage`)로 이동합니다.
+        * **Edit**: 해당 도서의 수정 페이지(`UpdateBookPage`)로 이동합니다.
+        * **Delete**: `DeleteBookDialog` 컴포넌트를 통해 도서 삭제를 수행합니다. (API: `deleteBook`)
+    * 도서가 없을 경우 "No books found." 메시지를 표시합니다.
+
+#### 3. `AddBookPage.jsx` (도서 추가 페이지)
+* 새로운 도서를 시스템에 추가하기 위한 폼과 기능을 제공합니다.
+* **주요 기능**:
+    * 도서의 **제목**(최대 20자), **내용**(최대 500자), **카테고리**를 입력받습니다. 각 입력 필드에는 글자 수 제한 및 현재 글자 수가 표시됩니다.
+    * **DALL-E 연동 표지 이미지 생성**:
+        * 사용자가 OpenAI API 키와 도서 제목을 입력한 후 'Generate Image' 버튼을 클릭하면 `generateBookCoverImage` 함수가 OpenAI API를 직접 호출하여 책 표지 이미지를 생성합니다.
+        * 생성된 이미지는 페이지 내에 미리보기 형태로 즉시 표시됩니다. 이미지가 없거나 생성 중일 때는 기본 이미지(`default-cover.png`) 또는 로딩 상태가 표시됩니다.
+    * 필수 정보(제목, 카테고리 등)가 모두 입력되면 'Add Book' 버튼을 통해 `createBook` API를 호출하여 새 도서 정보를 백엔드 서버에 저장합니다.
+    * 입력값 유효성 검사(예: 카테고리 선택 여부) 및 작업 결과(성공, 실패, 경고)를 사용자에게 Snackbar 메시지로 피드백합니다.
+    * 'Cancel' 버튼을 통해 도서 추가를 취소하고 메인 페이지로 돌아갈 수 있습니다.
+
+#### 4. `BookDetailPage.jsx` (도서 상세 정보 페이지)
+* 특정 도서 한 권에 대한 모든 상세 정보를 보여주는 페이지입니다.
+* **주요 기능**:
+    * URL 경로의 파라미터(`id`)를 사용하여 `getBookById` API를 호출, 해당 ID의 도서 정보를 가져와 화면에 표시합니다.
+    * 도서의 제목, 전체 내용, 카테고리, 그리고 표지 이미지를 상세하게 보여줍니다.
+    * 표지 이미지가 없거나 URL 로딩에 실패한 경우, `onError` 핸들러를 통해 기본 이미지(`default-cover.png`)로 대체 표시됩니다.
+    * 페이지 상단에는 "Books / {책 제목}" 형태의 **Breadcrumbs**를 제공하여 사용자의 현재 위치와 네비게이션 경로를 명확히 안내합니다.
+    * **Edit** 버튼: 해당 도서의 정보를 수정할 수 있는 `UpdateBookPage`로 이동합니다.
+    * **Delete** 버튼: `DeleteBookDialog`를 열어 해당 도서를 삭제할 수 있도록 합니다.
+
+#### 5. `UpdateBookPage.jsx` (도서 수정 페이지)
+* 기존에 등록된 도서의 정보를 수정하는 기능을 제공합니다.
+* **주요 기능**:
+    * URL 경로의 파라미터(`id`)를 사용하여 `getBookById` API를 호출, 해당 도서의 현재 정보를 가져와 폼에 미리 채워줍니다. (`initialFormData` 상태에 원본 데이터 저장)
+    * 도서의 제목(최대 20자), 내용(최대 500자), 카테고리, 표지 이미지를 수정할 수 있습니다. 입력 필드 UI는 `AddBookPage`와 유사합니다.
+    * **DALL-E 연동 표지 이미지 재생성**: `AddBookPage`와 동일하게, API 키와 (변경된) 제목을 이용하여 새로운 표지 이미지를 생성하고 기존 이미지를 대체할 수 있습니다.
+    * **변경 감지 로직**: 사용자가 폼 데이터를 수정한 경우에만 'Update Book' 버튼이 활성화됩니다. (`hasFormChanged` 함수와 `shallowEqual` 유틸리티 사용) 변경 사항이 없으면 버튼은 비활성화되고, 제출 시 "변경된 내용이 없습니다."라는 Snackbar 메시지가 표시됩니다.
+    * 'Update Book' 버튼 클릭 시 `partialUpdateBook` API를 사용하여 변경된 필드만 백엔드 서버로 전송하여 도서 정보를 업데이트합니다.
+    * 입력값 유효성 검사 및 작업 결과를 Snackbar 메시지로 피드백합니다.
+    * 'Cancel' 버튼을 통해 수정을 취소하고 이전 페이지(일반적으로 해당 도서의 상세 페이지)로 돌아갈 수 있습니다.
+
+### API 연동 (`api.js`)
+프론트엔드와 백엔드 서버 간의 모든 HTTP 통신은 `src/api.js` 파일에 정의된 함수들을 통해 표준화된 방식으로 이루어집니다. `axios` 라이브러리를 사용하여 RESTful API를 호출하며, 각 함수는 특정 API 엔드포인트와 매핑됩니다.
+
+* **`createBook(bookData)`**: `POST /api/books` - 새 도서 정보 생성.
+* **`getAllBooks(params)`**: `GET /api/books` - 모든 도서 목록 조회. 검색어, 페이지네이션, 정렬을 위한 파라미터를 받을 수 있습니다. (응답: `Page<BookResponse>`)
+* **`getBookById(id)`**: `GET /api/books/{id}` - 특정 ID를 가진 도서의 상세 정보 조회. (응답: `BookResponse`)
+* **`updateBook(id, bookData)`**: `PUT /api/books/{id}` - 특정 ID를 가진 도서의 전체 정보를 업데이트. (현재 프론트엔드에서는 주로 `partialUpdateBook` 사용)
+* **`partialUpdateBook(id, bookData)`**: `PATCH /api/books/{id}` - 특정 ID를 가진 도서의 부분 정보를 업데이트. (응답: `BookResponse`)
+* **`deleteBook(id)`**: `DELETE /api/books/{id}` - 특정 ID를 가진 도서 삭제. (응답: `void` 또는 `204 No Content`)
+* **`generateBookCoverImage(title, apiKey)`**: `POST https://api.openai.com/v1/images/generations` - DALL-E API를 직접 호출하여 주어진 제목에 대한 책 표지 이미지를 생성. (프론트엔드에서 OpenAI API 키 필요)
+
+### 스타일링 (`styles.jsx`)
+애플리케이션의 전반적인 UI 디자인과 컴포넌트 스타일링은 **Material-UI (MUI)**의 `styled` API를 사용하여 `src/pages/styles.jsx` 파일에 중앙화되어 관리됩니다. 이를 통해 일관된 디자인 시스템을 유지하고 코드 재사용성을 높입니다.
+
+* **`PageContainer`**: 모든 페이지의 최상위 레이아웃을 정의하는 컨테이너. flexbox를 사용하여 AppBar, 주 콘텐츠, Footer 영역을 배치합니다.
+* **`MainContentContainer`**: 각 페이지의 주된 콘텐츠가 표시되는 영역. 반응형 디자인을 고려하여 최대 너비 및 패딩이 설정되어 있습니다.
+* **`SectionTitle`**: 페이지 제목이나 섹션 제목에 사용되는 공통 타이포그래피 스타일.
+* **`StyledTextField`**: 애플리케이션 전체에서 사용되는 텍스트 입력 필드의 공통 스타일 (테두리, 색상, 폰트 등).
+* **`FormContainer`, `InputFieldWrapper`, `ButtonContainer`**: 폼 요소들의 레이아웃과 간격을 조정하는 컨테이너.
+* **`ImagePreviewContainer`, `GeneratedCoverImage`, `CoverImage`, `NoImagePlaceholder`**: 책 표지 이미지 미리보기 및 관련 UI 요소들의 스타일.
+* **`PrimaryButton`, `SecondaryButton`, `CancelButton`, `UpdateButton`, `GenerateButton`**: 다양한 용도의 버튼에 대한 공통 및 개별 스타일.
+* 각 페이지(`AddBookPage`, `UpdateBookPage`, `BookDetailPage`, `ViewBooksPage`, `HomePage`) 및 기능(테이블, 로딩 스피너, 에러 메시지, Snackbar 알림 등)에 특화된 다수의 스타일 컴포넌트들이 정의되어 있습니다.
+
 
 
 ## Skills
