@@ -71,13 +71,13 @@ function AddBookPage() {
   };
 
   const handleGenerateImage = async () => {
-    if (!apiKey || !formData.title) {
+    if (!apiKey || !formData.title || !formData.content) {
       setSnackbar({ open: true, message: '제목과 API 키를 입력해야 이미지를 생성할 수 있습니다.', severity: 'warning' });
       return;
     }
     setImageGenerating(true);
     try {
-      const imageUrl = await generateBookCoverImage(formData.title, apiKey);
+      const imageUrl = await generateBookCoverImage(formData.title,formData.content, apiKey);
       setFormData((prevData) => ({ ...prevData, coverUrl: imageUrl }));
       setSnackbar({ open: true, message: '이미지가 성공적으로 생성되었습니다!', severity: 'success' });
     } catch (error) {
@@ -275,7 +275,7 @@ function AddBookPage() {
           </ApiKeyInputWrapper>
           <GenerateButton
             onClick={handleGenerateImage}
-            disabled={imageGenerating || !apiKey || !formData.title}
+            disabled={imageGenerating || !apiKey || !formData.title || !formData.content}
           >
             {imageGenerating ? <CircularProgress size={24} color="inherit" /> : 'Generate Image'}
           </GenerateButton>
